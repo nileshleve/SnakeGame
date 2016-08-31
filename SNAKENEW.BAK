@@ -1,0 +1,280 @@
+
+#include<stdio.h>
+#include<conio.h>
+#include<dos.h>
+#include<stdlib.h>
+#include<time.h>
+#include<string.h>
+
+#define right 0
+#define left 1
+#define up 2
+#define down 3
+
+void wall();
+void food();
+void highsnake();
+void retry();
+int x[100],y[100],i,length=12,score=0,l_k=right,eat=0,xf,yf,boat=0;
+
+void main()
+{       union REGS v,o;
+	clrscr();
+	gotoxy(22,11);
+	printf("Use the arrow keys to change direction");
+	gotoxy(23,12);
+	printf("Press 'P' to PAUSE and 'Esc' to EXIT");
+	gotoxy(27,13);
+	printf("Press ENTER to continue...");
+	getch();
+	clrscr();
+	wall();
+	for(i=length-1;i>=0;i--)             //positioning the snake initially
+	{
+		x[i]=45-i;
+		y[i]=20;
+	}
+	while(1)
+	{
+		while(kbhit()==0)
+		{
+			gotoxy(60,1);
+			printf("TOTAL SCORE : %d",score);
+			for(i=length-1;i>0;i--)
+			{
+				x[i]=x[i-1];
+				y[i]=y[i-1]; //# replaced by alt+254
+			}//Clearing previous pixel
+			for(i=length-1;i>0;i--)        //snake structure
+			{
+				gotoxy(x[i],y[i]);
+				printf("#");
+			}
+			gotoxy(x[0],y[0]);
+			printf("þ");
+			gotoxy(x[length-1],y[length-1]);
+			printf(" ");              //alt+254 replaced by " "
+			food();
+			if(l_k==right || l_k==left)       //main delays
+			{
+				delay(80-(2*boat));
+			}
+			if(l_k==up || l_k==down)
+			{
+				delay(130-(2*boat));
+			}
+			if(x[0]==79 || x[0]==2 || y[0]==2 || y[0]==25) //hit wall
+			{
+				delay(1000);
+				clrscr();
+				wall();
+				gotoxy(30,13);
+				printf("You have hit the wall.");
+				gotoxy(33,14);
+				printf("Total score : %d",score);
+			highsnake();
+				getch();
+				exit(0);
+			}
+
+
+			if(l_k==right)
+			{
+				x[0]++;
+			}
+			if(l_k==left)
+			{
+				x[0]--;
+			}
+			if(l_k==up)
+			{
+				y[0]--;
+			}
+			if(l_k==down)
+			{
+				y[0]++;
+			}
+
+
+			for(i=length-1;i>1;i--)      //hit itself
+			{
+				if(x[0]==x[i] && y[0]==y[i])
+				{
+					delay(1000);
+					clrscr();
+					wall();
+					gotoxy(32,13);
+					printf("You have hit Yourself");
+					gotoxy(33,14);
+					printf("Total score : %d",score);
+				       highsnake();
+					getch();
+					getch();
+					exit(0);
+				}
+			}
+
+		}
+
+		v.h.ah=0;
+		int86(22,&v,&o);
+		if(o.h.ah==25)
+		{
+			gotoxy(2,1);
+			printf("PAUSED...");
+			while(kbhit()==0);
+			gotoxy(2,1);
+			printf("         ");
+		}
+		if(o.h.ah==1)
+		{
+			exit(0);
+		}
+		else if(o.h.ah==72 && l_k!=down)
+		{
+			l_k=up;
+		}
+		else if(o.h.ah==77 && l_k!=left)
+		{
+			l_k=right;
+		}
+		else if(o.h.ah==80 && l_k!=up)
+		{
+			l_k=down;
+		}
+		else if(o.h.ah==75 && l_k!=right)
+		{
+			l_k=left;
+		}
+	}
+}
+
+void wall(void)
+{
+	int x1,y1;
+	for(x1=2;x1<=79;x1++)
+	{
+		gotoxy(x1,2);
+		printf("&");
+		gotoxy(x1,25);
+		printf("&");
+	}
+	for(y1=3;y1<=24;y1++)
+	{
+		gotoxy(2,y1);
+		printf("$");
+		gotoxy(79,y1);
+		printf("$");
+	}
+}
+
+void food(void)
+{
+	if(eat==0)
+	{
+		srand(time(NULL));
+		xf=(rand()%(73))+4; //to generate food away from wall
+		yf=(rand()%(21))+3;
+		eat=1;
+	}
+	gotoxy(xf,yf);
+	printf("*");
+
+	if((xf==x[0])&&(yf==y[0]))
+	{
+		score=score+9;
+		length++;
+		eat=0;
+		boat++;
+	}
+}
+
+
+
+
+
+
+void highsnake()
+{    int nol=0;         char ch;
+   int check=0;		   int k;int highest=-1;
+
+FILE *fp,*ft,*fn;
+
+
+struct player
+{
+char name[20];
+int points;
+};
+struct player pro,store[1000];
+pro.points=score;
+
+printf("\n\t\t\t      Enter your name ");
+fflush(stdin);
+gets(pro.name);
+fflush(stdin);
+fp=fopen("score.txt","a");
+if(fp==NULL)
+{
+puts("Cannot open the file during writimg");
+exit(1);
+}
+fprintf(fp,"%s %d\n",pro.name,pro.points);
+fclose(fp);
+
+
+fn=fopen("score.txt","r");
+while(1)
+{ch=fgetc(fn);
+if(ch==EOF)
+break;
+if(ch=='\n')
+nol++;
+}
+fclose(fn);
+
+
+ft=fopen("score.txt","r");
+if(ft==NULL)
+{
+puts("Cannot open the file during reading score");
+exit(2);
+}
+
+for(k=0;k<nol;k++)
+fscanf(ft,"\n%s %d ",store[k].name,&store[k].points);
+fclose(ft);
+
+
+
+for(k=0;k<nol;k++)
+{
+if(store[k].points>highest)
+{
+highest=store[k].points;
+check=k;
+}}
+
+printf("\t\t\tThe Highest Scorer is %s=>%d \n",store[check].name,store[check].points);
+retry();
+}
+
+
+
+
+
+
+void retry()
+{int ch;
+printf("\t\t\t\tWant to Retry... Y/N:");
+fflush(stdin);
+ch=getche();
+if(ch=='y'||ch=='Y')
+{
+boat=0;
+score=0;
+eat=0;
+length=12;
+main();
+}
+}
